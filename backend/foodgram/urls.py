@@ -27,7 +27,8 @@ urlpatterns = [
     ), name='custom_token_logout'),
     path('api/', include('api.urls')),
     path('api/', include('users.urls')),
-    path('api/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('api/redoc/', schema_view.with_ui(
+        'redoc', cache_timeout=0), name='schema-redoc'),
 ]
 
 if settings.DEBUG:
