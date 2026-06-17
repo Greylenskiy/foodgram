@@ -4,7 +4,7 @@ from django.db import models
 
 class User(AbstractUser):
     """Кастомная модель пользователя."""
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, max_length=254)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
 
     USERNAME_FIELD = 'email'

@@ -6,3 +6,4 @@ Pillow
 psycopg2-binary
 gunicorn
 python-dotenv
+drf_yasg
