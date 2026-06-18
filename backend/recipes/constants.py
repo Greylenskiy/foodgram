@@ -1,0 +1,8 @@
+"""Константы для приложения recipes."""
+
+MAX_AMOUNT = 10000
+MIN_AMOUNT = 1
+MAX_COOKING_TIME = 10000
+MIN_COOKING_TIME = 1
+MAX_NAME_LENGTH = 200
+MAX_SLUG_LENGTH = 100
