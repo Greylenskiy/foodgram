@@ -1,13 +1,20 @@
+from django.db.models import Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Sum
 
-from recipes.models import (Recipe, Tag, Ingredient, Favorite,
-                            ShoppingCart, RecipeIngredient)
+from recipes.models import (
+    Recipe,
+    Tag,
+    Ingredient,
+    Favorite,
+    ShoppingCart,
+    RecipeIngredient,
+)
 from .serializers import (
     RecipeReadSerializer,
     RecipeWriteSerializer,

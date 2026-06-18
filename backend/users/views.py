@@ -1,20 +1,20 @@
+import base64
+
+from django.contrib.auth import authenticate
+from django.core.files.base import ContentFile
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
+from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
 
 from .models import User, Subscription
 from api.serializers import (
     CustomUserSerializer,
     SubscriptionSerializer,
     CustomUserCreateSerializer,
-    CustomUserResponseSerializer
 )
-from rest_framework.authtoken.models import Token
-from rest_framework.views import APIView
-from django.contrib.auth import authenticate
-import base64
-from django.core.files.base import ContentFile
 
 
 class UserViewSet(viewsets.ModelViewSet):
