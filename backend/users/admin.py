@@ -22,13 +22,13 @@ class CustomUserAdmin(UserAdmin):
         ('Дополнительно', {'fields': ('avatar',)}),
     )
 
+    @admin.display(description='Рецептов')
     def recipes_count(self, obj):
         return obj.recipes.count()
-    recipes_count.short_description = 'Рецептов'
 
+    @admin.display(description='Подписчиков')
     def followers_count(self, obj):
         return obj.following.count()
-    followers_count.short_description = 'Подписчиков'
 
 
 # Скрываем ненужные модели в админке

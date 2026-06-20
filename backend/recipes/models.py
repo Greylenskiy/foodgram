@@ -9,6 +9,7 @@ from .constants import (
     MIN_COOKING_TIME,
     MAX_NAME_LENGTH,
     MAX_SLUG_LENGTH,
+    MAX_LENGHT,
 )
 
 User = get_user_model()
@@ -43,7 +44,7 @@ class Ingredient(models.Model):
         verbose_name='Название'
     )
     measurement_unit = models.CharField(
-        max_length=50,
+        max_length=MAX_LENGHT,
         verbose_name='Единица измерения'
     )
 

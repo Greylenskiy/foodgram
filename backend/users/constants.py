@@ -1,0 +1,5 @@
+"""Константы для приложения users."""
+
+MAX_EMAIL_LENGTH = 254
+MAX_USERNAME_LENGTH = 150
+MAX_NAME_LENGTH = 150

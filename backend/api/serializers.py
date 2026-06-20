@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from recipes.constants import MIN_AMOUNT, MAX_AMOUNT
 from recipes.models import (
     Recipe,
     Tag,
@@ -47,13 +48,14 @@ class RecipeIngredientWriteSerializer(serializers.Serializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
     )
-
     amount = serializers.IntegerField(
-        min_value=1,
-        max_value=10000,
+        min_value=MIN_AMOUNT,
+        max_value=MAX_AMOUNT,
         error_messages={
-            'min_value': 'Количество ингредиента должно быть не менее 1.',
-            'max_value': 'Количество ингредиента не может превышать 10000.',
+            'min_value':
+            f'Количество ингредиента должно быть не менее {MIN_AMOUNT}.',
+            'max_value':
+            f'Количество ингредиента не может превышать {MAX_AMOUNT}.',
             'invalid': 'Количество должно быть целым числом.',
         }
     )
@@ -117,6 +119,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return None
 
 
+class CustomUserResponseSerializer(serializers.ModelSerializer):
+    """Сериализатор для ответа при регистрации."""
+
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'username', 'first_name', 'last_name')
+
+
 class CustomUserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -141,21 +151,8 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
         return user
 
     def to_representation(self, instance):
-        return {
-            'id': instance.id,
-            'email': instance.email,
-            'username': instance.username,
-            'first_name': instance.first_name,
-            'last_name': instance.last_name,
-        }
-
-
-class CustomUserResponseSerializer(serializers.ModelSerializer):
-    """Сериализатор для ответа при регистрации."""
-
-    class Meta:
-        model = User
-        fields = ('id', 'email', 'username', 'first_name', 'last_name')
+        return CustomUserResponseSerializer(
+            instance, context=self.context).data
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
@@ -202,22 +199,31 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('name', 'image', 'text',
-                  'cooking_time', 'ingredients', 'tags')
+        fields = (
+            'name', 'image', 'text', 'cooking_time', 'ingredients', 'tags'
+        )
 
     def validate(self, data):
         """Общая валидация для POST и PATCH."""
         request = self.context.get('request')
 
-        if request.method == 'PATCH' and 'ingredients' not in request.data:
-            raise serializers.ValidationError(
-                {'ingredients': 'Это поле обязательно.'}
-            )
+        if request.method == 'PATCH':
+            if 'ingredients' not in request.data:
+                raise serializers.ValidationError(
+                    {'ingredients': 'Это поле обязательно.'}
+                )
+            if 'tags' not in request.data:
+                raise serializers.ValidationError(
+                    {'tags': 'Это поле обязательно.'}
+                )
 
-        if request.method == 'PATCH' and 'tags' not in request.data:
-            raise serializers.ValidationError(
-                {'tags': 'Это поле обязательно.'}
-            )
+        tags_data = request.data.get('tags')
+        if tags_data:
+            for tag_id in tags_data:
+                if not Tag.objects.filter(id=tag_id).exists():
+                    raise serializers.ValidationError(
+                        {'tags': f'Тег с id={tag_id} не существует.'}
+                    )
 
         return data
 
@@ -237,51 +243,44 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def create(self, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
-        tags_data = validated_data.pop('tags')
-
-        recipe = Recipe.objects.create(**validated_data)
-
-        recipe.tags.set(tags_data)
-
+    def _create_ingredients(self, recipe, ingredients_data):
+        """Вспомогательный метод для создания ингредиентов."""
         RecipeIngredient.objects.bulk_create([
             RecipeIngredient(
                 recipe=recipe,
-                ingredient=ing['id'],  # ← ing['id']
+                ingredient=ing['id'],
                 amount=ing['amount']
             )
             for ing in ingredients_data
         ])
 
+    def create(self, validated_data):
+        """Создание рецепта с ингредиентами и тегами."""
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
+
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags_data)
+        self._create_ingredients(recipe, ingredients_data)
+
         return recipe
 
     def update(self, instance, validated_data):
         """Обновление рецепта с ингредиентами и тегами."""
-        if 'name' in validated_data:
-            instance.name = validated_data['name']
-        if 'text' in validated_data:
-            instance.text = validated_data['text']
-        if 'cooking_time' in validated_data:
-            instance.cooking_time = validated_data['cooking_time']
-        if 'image' in validated_data:
-            instance.image = validated_data['image']
+        tags_data = validated_data.pop('tags', None)
+        ingredients_data = validated_data.pop('ingredients', None)
 
-        if 'tags' in validated_data:
-            instance.tags.set(validated_data['tags'])
+        instance = super().update(instance, validated_data)
 
-        if 'ingredients' in validated_data:
+        # Обновляем теги
+        if tags_data is not None:
+            instance.tags.set(tags_data)
+
+        # Обновляем ингредиенты
+        if ingredients_data is not None:
             instance.ingredients_amount.all().delete()
-            RecipeIngredient.objects.bulk_create([
-                RecipeIngredient(
-                    recipe=instance,
-                    ingredient=ing['id'],
-                    amount=ing['amount']
-                )
-                for ing in validated_data['ingredients']
-            ])
+            self._create_ingredients(instance, ingredients_data)
 
-        instance.save()
         return instance
 
     def to_representation(self, instance):

@@ -2,12 +2,14 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
 
+from .constants import MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, MAX_USERNAME_LENGTH
+
 
 class User(AbstractUser):
     """Кастомная модель пользователя."""
     email = models.EmailField(
         unique=True,
-        max_length=254,
+        max_length=MAX_EMAIL_LENGTH,
         verbose_name='Email'
     )
     avatar = models.ImageField(
@@ -18,17 +20,17 @@ class User(AbstractUser):
         verbose_name='Аватар'
     )
     username = models.CharField(
-        max_length=150,
+        max_length=MAX_USERNAME_LENGTH,
         unique=True,
         validators=[RegexValidator(r'^[\w.@+-]+\Z')],
         verbose_name='Имя пользователя'
     )
     first_name = models.CharField(
-        max_length=150,
+        max_length=MAX_NAME_LENGTH,
         verbose_name='Имя'
     )
     last_name = models.CharField(
-        max_length=150,
+        max_length=MAX_NAME_LENGTH,
         verbose_name='Фамилия'
     )
 
