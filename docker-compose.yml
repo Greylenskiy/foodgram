@@ -14,7 +14,7 @@ services:
       - static_value:/app/static
       - media_value:/app/media
     command: >
-      sh -c "cp -r /app/data/ &&
+      sh -c "cp -r /app/data/ / &&
              python manage.py migrate &&
              python manage.py load_ingredients &&
              python manage.py collectstatic --noinput &&
