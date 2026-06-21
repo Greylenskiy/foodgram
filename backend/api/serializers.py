@@ -217,14 +217,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     {'tags': 'Это поле обязательно.'}
                 )
 
-        tags_data = request.data.get('tags')
-        if tags_data:
-            for tag_id in tags_data:
-                if not Tag.objects.filter(id=tag_id).exists():
-                    raise serializers.ValidationError(
-                        {'tags': f'Тег с id={tag_id} не существует.'}
-                    )
-
         return data
 
     def validate_tags(self, value):

@@ -1,7 +1,4 @@
-import base64
-
 from django.contrib.auth import authenticate
-from django.core.files.base import ContentFile
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -11,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.permissions import IsAuthenticated
 
 from recipes.models import (
     Recipe,
@@ -34,6 +31,7 @@ from .serializers import (
 )
 from .permissions import IsAuthorOrReadOnly
 from .filters import RecipeFilter, IngredientFilter
+from .fields import Base64ImageField
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -69,10 +67,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeWriteSerializer
         return RecipeReadSerializer
 
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAuthenticated()]
+        return super().get_permissions()
+
     def perform_create(self, serializer):
         """Сохраняет рецепт с автором — текущим пользователем."""
-        if not self.request.user.is_authenticated:
-            raise AuthenticationFailed("Требуется авторизация")
         serializer.save(author=self.request.user)
 
     def _add_to_user_recipe(self, request, pk, model, error_message):
@@ -309,13 +310,10 @@ class UserViewSet(viewsets.ModelViewSet):
         """Управление аватаром."""
         if request.method == 'PUT':
             avatar_data = request.data.get('avatar')
-            if avatar_data and avatar_data.startswith('data:image'):
-                format, imgstr = avatar_data.split(';base64,')
-                ext = format.split('/')[-1]
-                request.user.avatar = ContentFile(
-                    base64.b64decode(imgstr),
-                    name=f'avatar.{ext}'
-                )
+            image_field = Base64ImageField()
+            try:
+                request.user.avatar = image_field.to_internal_value(
+                    avatar_data)
                 request.user.save()
                 return Response(
                     {'avatar': request.build_absolute_uri(
@@ -323,8 +321,13 @@ class UserViewSet(viewsets.ModelViewSet):
                     )},
                     status=status.HTTP_200_OK
                 )
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            except Exception:
+                return Response(
+                    {'avatar': 'Некорректное изображение.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
+        # DELETE
         if request.user.avatar:
             request.user.avatar.delete()
         request.user.avatar = None
