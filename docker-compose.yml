@@ -1,11 +1,13 @@
 services:
   frontend:
     image: grey1711/foodram_frontend
+    restart: always
     volumes:
       - frontend_build:/app/build
 
   backend:
     image: grey1711/foodgram_backend1:latest
+    restart: always
     env_file:
       - .env
     depends_on:
@@ -22,6 +24,7 @@ services:
 
   db:
     image: postgres:15
+    restart: always
     env_file:
       - .env
     volumes:
@@ -29,6 +32,7 @@ services:
 
   nginx:
     image: nginx:1.25.4-alpine
+    restart: always
     ports:
       - "8017:80"
     volumes:
