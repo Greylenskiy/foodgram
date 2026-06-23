@@ -1,7 +1,6 @@
 services:
   frontend:
     image: grey1711/foodram_frontend
-    restart: always
     volumes:
       - frontend_build:/app/build
 
