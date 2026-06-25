@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 from django.db.models import Sum
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
@@ -379,3 +379,9 @@ class CustomTokenLogoutView(APIView):
             {'detail': 'Invalid token.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
+
+
+def short_link_redirect(request, recipe_id):
+    """Редирект по короткой ссылке на страницу рецепта."""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    return redirect(f'/recipes/{recipe.id}/')
