@@ -7,6 +7,8 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
+from api.views import short_link_redirect
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Foodgram API",
@@ -24,6 +26,7 @@ urlpatterns = [
         'redoc', cache_timeout=0), name='schema-redoc'),
     path('api/docs/', schema_view.with_ui(
         'swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('s/<int:recipe_id>/', short_link_redirect, name='short_link'),
 ]
 
 if settings.DEBUG:
